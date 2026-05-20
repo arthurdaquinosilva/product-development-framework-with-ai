@@ -59,21 +59,24 @@ Read [FRAMEWORK.md](FRAMEWORK.md) for the full phase-by-phase walkthrough.
 
 ## How to use it
 
-1. Clone this repository.
-2. Install the `pdev-init` command (one time, from the repo root):
-   ```
-   bash install.sh
-   ```
-3. From inside any project directory, scaffold the framework files:
-   ```
-   pdev-init
-   ```
-   (No install? Run `bash setup.sh` from the repo root instead — it will ask
-   for the target project directory.)
-4. Open [FRAMEWORK.md](FRAMEWORK.md) and work through the phases in order.
-5. At each phase: fill in what you already know, then hand the artifact to your
+The fastest way to scaffold the framework into your project — no clone, no
+install, always the latest version:
+
+```
+cd your-project
+npx pdev-init
+```
+
+Prefer a local install? Clone this repo, run `bash install.sh` once, then run
+`pdev-init` from inside any project directory. (Or skip the install entirely
+and run `bash setup.sh` from the repo root.)
+
+Once the files are in place:
+
+1. Open [FRAMEWORK.md](FRAMEWORK.md) and work through the phases in order.
+2. At each phase: fill in what you already know, then hand the artifact to your
    agent with the phase's prompt to refine it together.
-6. Commit the artifacts. They are **living documents** — the agent reads them for
+3. Commit the artifacts. They are **living documents** — the agent reads them for
    context on every task and updates them as the product evolves.
 
 See [EXAMPLE.md](EXAMPLE.md) for a complete end-to-end walkthrough.

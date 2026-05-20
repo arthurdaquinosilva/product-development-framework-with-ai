@@ -58,21 +58,24 @@ Leia [FRAMEWORK.md](FRAMEWORK.md) para o guia completo fase a fase.
 
 ## Como usar
 
-1. Clone este repositório.
-2. Instale o comando `pdev-init` (uma vez, a partir da raiz do repositório):
-   ```
-   bash install.sh
-   ```
-3. De dentro de qualquer diretório de projeto, gere os arquivos do framework:
-   ```
-   pdev-init
-   ```
-   (Sem instalar? Rode `bash setup.sh` a partir da raiz do repositório — ele
-   vai perguntar o diretório do projeto de destino.)
-4. Abra o [FRAMEWORK.md](FRAMEWORK.md) e percorra as fases em ordem.
-5. Em cada fase: preencha o que você já sabe, depois passe o artefato pro agente
+A forma mais rápida de gerar o framework no seu projeto — sem clonar, sem
+instalar, sempre a versão mais recente:
+
+```
+cd seu-projeto
+npx pdev-init
+```
+
+Prefere uma instalação local? Clone este repositório, rode `bash install.sh`
+uma vez, depois rode `pdev-init` de dentro de qualquer diretório de projeto.
+(Ou pule a instalação e rode `bash setup.sh` a partir da raiz do repositório.)
+
+Com os arquivos no lugar:
+
+1. Abra o [FRAMEWORK.md](FRAMEWORK.md) e percorra as fases em ordem.
+2. Em cada fase: preencha o que você já sabe, depois passe o artefato pro agente
    com o prompt da fase para refinarem juntos.
-6. Commite os artefatos. Eles são **documentos vivos** — o agente os lê para
+3. Commite os artefatos. Eles são **documentos vivos** — o agente os lê para
    recuperar contexto em cada tarefa e os atualiza conforme o produto evolui.
 
 Veja [EXAMPLE.md](EXAMPLE.md) para um exemplo completo de ponta a ponta.
