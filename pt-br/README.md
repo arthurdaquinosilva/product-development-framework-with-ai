@@ -59,15 +59,20 @@ Leia [FRAMEWORK.md](FRAMEWORK.md) para o guia completo fase a fase.
 ## Como usar
 
 1. Clone este repositório.
-2. Rode o script de setup a partir da raiz do repositório — ele copia os
-   arquivos certos para o seu projeto e coloca tudo no lugar correto:
+2. Instale o comando `pdev-init` (uma vez, a partir da raiz do repositório):
    ```
-   bash setup.sh
+   bash install.sh
    ```
-3. Abra o [FRAMEWORK.md](FRAMEWORK.md) e percorra as fases em ordem.
-4. Em cada fase: preencha o que você já sabe, depois passe o artefato pro agente
+3. De dentro de qualquer diretório de projeto, gere os arquivos do framework:
+   ```
+   pdev-init
+   ```
+   (Sem instalar? Rode `bash setup.sh` a partir da raiz do repositório — ele
+   vai perguntar o diretório do projeto de destino.)
+4. Abra o [FRAMEWORK.md](FRAMEWORK.md) e percorra as fases em ordem.
+5. Em cada fase: preencha o que você já sabe, depois passe o artefato pro agente
    com o prompt da fase para refinarem juntos.
-5. Commite os artefatos. Eles são **documentos vivos** — o agente os lê para
+6. Commite os artefatos. Eles são **documentos vivos** — o agente os lê para
    recuperar contexto em cada tarefa e os atualiza conforme o produto evolui.
 
 Veja [EXAMPLE.md](EXAMPLE.md) para um exemplo completo de ponta a ponta.

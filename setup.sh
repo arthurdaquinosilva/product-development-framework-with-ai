@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks so this works when invoked via a symlinked global command
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 # Verify we're running from the framework repo
 if [[ ! -d "$SCRIPT_DIR/en" || ! -d "$SCRIPT_DIR/pt-br" ]]; then
@@ -32,6 +33,7 @@ echo ""
 # Target directory
 read -rp "Target project directory / Diretório do projeto [.]: " TARGET
 TARGET=${TARGET:-.}
+TARGET=${TARGET/#\~/$HOME}
 TARGET=$(cd "$TARGET" 2>/dev/null && pwd || echo "$TARGET")
 
 # Docs directory name
@@ -84,7 +86,7 @@ if [[ "$LANG" == "pt-br" ]]; then
   echo "  1. Preencha $DOCS/project-scope.md com sua ideia inicial"
   echo "  2. Inicie o modo guiado:"
   echo "       Claude Code → o CLAUDE.md já está na raiz, abra o projeto"
-  echo "       Outro agente → cole o conteúdo de pt-br/GUIDE.md na sua sessão de IA"
+  echo "       Outro agente → cole o conteúdo de $SCRIPT_DIR/$LANG/GUIDE.md na sua sessão de IA"
   echo "  3. Siga as 11 fases do framework"
 else
   echo "Done! Next steps:"
@@ -92,7 +94,7 @@ else
   echo "  1. Fill in $DOCS/project-scope.md with your initial idea"
   echo "  2. Start guided mode:"
   echo "       Claude Code  → CLAUDE.md is already at the root, open the project"
-  echo "       Other agents → paste the contents of en/GUIDE.md into your AI session"
+  echo "       Other agents → paste the contents of $SCRIPT_DIR/$LANG/GUIDE.md into your AI session"
   echo "  3. Follow the 11 phases of the framework"
 fi
 
