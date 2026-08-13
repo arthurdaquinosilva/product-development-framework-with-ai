@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Environment / secrets
+.env
+.env.*
+
+# This repo is documentation only — it has no build output.
+# When you copy templates/ into a real project, add that project's
+# own .gitignore there.
