@@ -1,31 +1,45 @@
 # Plano de Implementação
 
 <!--
-  Fase 5 do framework, mantido atualizado durante a Fase 7 (o loop de build).
-  Tarefas pequenas o suficiente para revisar em um único diff. Ordenadas para
-  que algo rode ponta a ponta cedo. Marque as tarefas conforme elas ficam
-  prontas. Veja FRAMEWORK.md → Fase 5 e 7.
+  Fase 6 do framework (/pdev-plan), mantido atualizado durante a Fase 8 (o
+  loop de build). Cada tarefa é uma mudança coerente com uma verificação de
+  aceite executável — dimensionada para que um agente consiga terminá-la e
+  prová-la sem voltar para perguntar. Ordenadas para que algo rode de ponta a
+  ponta cedo. Veja FRAMEWORK.md → Fase 6 e 8.
 -->
 
 ## Legenda
 
 - `[ ]` não iniciada · `[~]` em progresso · `[x]` concluída
-- **Depende de:** qual(is) tarefa(s) deve(m) ser concluída(s) antes.
-- **Concluído quando:** o critério verificável que fecha a tarefa.
+- **Verificação de aceite:** o teste ou comando que passa quando a tarefa
+  está pronta. Precisa o suficiente para escrever o teste a partir dela.
+  Nunca "funciona corretamente".
+- **Depende de:** tarefa(s) que precisa(m) entrar antes.
+- **Grupo paralelo:** tarefas do mesmo grupo não dependem umas das outras e
+  não mexem nos mesmos arquivos — podem ser construídas ao mesmo tempo.
+- **Mexe em:** principais arquivos/módulos alterados (para detectar conflitos).
+- **Revisão:** `auto` (gates + uma olhada no diff) ou `humana` (revisão linha
+  a linha — diga por quê). Veja os gatilhos de revisão humana no `AGENTS.md`.
 
 ---
 
-## Fase A: <!-- ex: Esqueleto — algo que rode ponta a ponta -->
+## Fase A: <!-- ex: Esqueleto — algo que rode de ponta a ponta -->
 
 ### A.1 — <!-- nome da tarefa -->
-- [ ] **Tarefa.** <!-- o que é construído, com escopo em um único diff -->
+- [ ] **Tarefa.** <!-- o que é construído -->
+- **Verificação de aceite:** <!-- ex: `pytest tests/test_cli.py::test_help` passa -->
 - **Depende de:** <!-- nenhuma / id da tarefa -->
-- **Concluído quando:** <!-- o critério -->
+- **Grupo paralelo:** <!-- ex: A1, ou "—" -->
+- **Mexe em:** <!-- arquivos / módulos -->
+- **Revisão:** <!-- auto | humana — motivo -->
 
 ### A.2 — <!-- nome da tarefa -->
 - [ ] **Tarefa.**
+- **Verificação de aceite:**
 - **Depende de:**
-- **Concluído quando:**
+- **Grupo paralelo:**
+- **Mexe em:**
+- **Revisão:**
 
 ---
 
@@ -33,24 +47,30 @@
 
 ### B.1 — <!-- nome da tarefa -->
 - [ ] **Tarefa.**
+- **Verificação de aceite:**
 - **Depende de:**
-- **Concluído quando:**
+- **Grupo paralelo:**
+- **Mexe em:**
+- **Revisão:**
 
 ---
 
-## Fase C: <!-- ex: Polimento e robustez -->
+## Fase C: <!-- ex: Polimento e reforço -->
 
 ### C.1 — <!-- nome da tarefa -->
 - [ ] **Tarefa.**
+- **Verificação de aceite:**
 - **Depende de:**
-- **Concluído quando:**
+- **Grupo paralelo:**
+- **Mexe em:**
+- **Revisão:**
 
 ---
 
 ## Desvios do plano
 
-<!-- Quando o build revelar que o plano estava errado, registre o que mudou
-     e por quê aqui, e divida ou reordene as tarefas acima. Referencie o
+<!-- Quando o build revelar que o plano estava errado, anote aqui o que mudou e
+     por quê, e divida ou reordene as tarefas acima. Referencie o
      decisions.md. -->
 
 -

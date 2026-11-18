@@ -1,8 +1,8 @@
 # MVP Definition
 
 <!--
-  Phase 3 of the framework. The MVP is the smallest version that still solves
-  the core problem AND is worth shipping. See FRAMEWORK.md → Phase 3.
+  Phase 3 of the framework (/pdev-mvp). The MVP is the smallest version that
+  still solves the core problem AND is worth shipping. See FRAMEWORK.md → Phase 3.
 -->
 
 ## Core problem the MVP must solve
@@ -26,14 +26,17 @@
 
 ## Success criteria
 
-<!-- How will we know the MVP worked? Concrete and checkable. These become the
-     priority targets for the test plan in Phase 8. -->
+<!-- How will we know the MVP worked? Concrete enough to become automated
+     tests — they turn into acceptance checks in Phase 6. "Streak is correct
+     across a month boundary", not "streaks work". Mark anything only a person
+     can judge as (manual). -->
 
 -
 
 ## Assumptions & risks
 
 <!-- What are we betting on being true? What could make the MVP fail even if we
-     build it well? -->
+     build it well? Mark the risky ones a quick throwaway prototype could test
+     with (spike) — Phase 4 answers those before the stack is chosen. -->
 
 -

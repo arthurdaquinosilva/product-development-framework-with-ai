@@ -4,7 +4,8 @@
   A running log, updated across every phase of the framework. Capture decisions
   that were non-obvious or hard to reverse — the ones future-you (or the agent)
   would otherwise have to reverse-engineer. Newest entry on top.
-  Lightweight ADR style. See FRAMEWORK.md → Cross-cutting principles.
+  Lightweight ADR style. The agent appends entries as part of every phase and
+  every build task. See FRAMEWORK.md → Cross-cutting principles.
 -->
 
 ## YYYY-MM-DD — <!-- short title of the decision -->

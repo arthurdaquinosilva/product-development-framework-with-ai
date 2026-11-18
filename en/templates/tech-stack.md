@@ -1,9 +1,9 @@
 # Tech Stack
 
 <!--
-  Phase 4 of the framework. Record the chosen stack AND the reasoning. Log the
-  significant, hard-to-reverse calls in decisions.md too.
-  See FRAMEWORK.md → Phase 4.
+  Phase 5 of the framework (/pdev-stack). Record the chosen stack AND the
+  reasoning. Log the significant, hard-to-reverse calls in decisions.md too.
+  See FRAMEWORK.md → Phase 5.
 -->
 
 ## Constraints
@@ -17,7 +17,8 @@
 ## Stack
 
 <!-- One row per layer. "Why" is one line. "Alternative considered" keeps the
-     door open if the choice goes wrong. -->
+     door open if the choice goes wrong. Verification tooling is first-class:
+     the agent relies on fast, strict feedback to know when it's done. -->
 
 | Layer                    | Choice | Why | Alternative considered |
 | ------------------------ | ------ | --- | ---------------------- |
@@ -26,7 +27,9 @@
 | Data store               |        |     |                        |
 | Hosting / infra          |        |     |                        |
 | Key libraries            |        |     |                        |
-| Tooling (lint, test, CI) |        |     |                        |
+| Test runner              |        |     |                        |
+| Lint / format / types    |        |     |                        |
+| CI                       |        |     |                        |
 
 ## Hard-to-reverse decisions
 

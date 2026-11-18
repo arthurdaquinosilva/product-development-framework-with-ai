@@ -4,7 +4,8 @@
   Um log contínuo, atualizado em todas as fases do framework. Capture decisões
   que foram não-óbvias ou difíceis de reverter — aquelas que o você do futuro
   (ou o agente) de outra forma teria que reverter-engenheirar. Entrada mais
-  recente no topo. Estilo ADR simplificado.
+  recente no topo. Estilo ADR simplificado. O agente adiciona entradas como
+  parte de toda fase e de toda tarefa de build.
   Veja FRAMEWORK.md → Princípios transversais.
 -->
 

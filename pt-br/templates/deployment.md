@@ -1,7 +1,8 @@
 # Deployment
 
 <!--
-  Fase 10 do framework. O objetivo é um release REPETÍVEL, não único.
+  Fase 10 do framework (/pdev-deploy). O objetivo é um release REPETÍVEL,
+  não único.
   Se um passo existe apenas na sua cabeça, não está feito.
   Veja FRAMEWORK.md → Fase 10.
 -->
@@ -31,7 +32,9 @@
 ## Health checks
 
 <!-- Como você confirma que um deploy foi bem-sucedido: o endpoint/comando/
-     sinal a verificar, e como é um resultado saudável. -->
+     sinal a verificar, e como é um resultado saudável. Torne-o um comando
+     executável que sai com código diferente de zero quando não está
+     saudável, para que o CI ou um agente consiga verificar um deploy. -->
 
 -
 

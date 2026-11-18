@@ -2,8 +2,8 @@
 
 <!--
   Phases 1–2 of the framework. Fill in Problem / Solution / Features yourself
-  first, roughly. Then have the agent review it, ask clarifying questions, and
-  rewrite this file with you. See FRAMEWORK.md → Phase 1 and Phase 2.
+  first, roughly. Then run /pdev-clarify: the agent reviews it, asks clarifying
+  questions, and rewrites this file with you. See FRAMEWORK.md → Phase 1 and 2.
 -->
 
 ## Problem

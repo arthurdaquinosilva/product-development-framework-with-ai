@@ -1,7 +1,8 @@
 # Deployment
 
 <!--
-  Phase 10 of the framework. The goal is a REPEATABLE release, not a one-off.
+  Phase 10 of the framework (/pdev-deploy). The goal is a REPEATABLE release,
+  not a one-off.
   If a step only lives in your head, it isn't done. See FRAMEWORK.md → Phase 10.
 -->
 
@@ -29,7 +30,8 @@
 ## Health checks
 
 <!-- How you confirm a deploy is good: the endpoint/command/signal to check,
-     and what a healthy result looks like. -->
+     and what a healthy result looks like. Make it a runnable command that
+     exits non-zero when unhealthy, so CI or an agent can verify a deploy. -->
 
 -
 

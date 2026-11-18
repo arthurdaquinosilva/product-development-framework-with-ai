@@ -8,6 +8,27 @@ throughout.
 Work through the phases in order the first time. After that, the process loops:
 phase 11 feeds back into phase 1 for the next iteration.
 
+## What this framework assumes about agents
+
+Coding agents no longer write one small snippet at a time while you watch. They
+work for long stretches on their own, run the tests, read the failures, fix
+their own mistakes, and can work on several tasks in parallel. That changes
+where your attention is worth the most:
+
+- **The plan is the highest-leverage thing you review.** A wrong plan executed
+  autonomously produces a lot of wrong code, fast.
+- **Executable checks are the spec.** An agent that can run a check will keep
+  working until it passes. An agent with only prose to go on will stop when it
+  _thinks_ it's done. So the checks are written before the code.
+- **Review depth follows risk, not volume.** Automated gates catch the routine
+  problems on every change. Your careful, line-by-line attention goes to the
+  changes that are expensive to get wrong.
+- **Code is cheap — including throwaway code.** A one-hour prototype can answer
+  a question that a week of discussion can't.
+
+What hasn't changed: the agent is only as good as the context it's given, and
+the decisions are yours.
+
 ## How to read this document
 
 Each phase below follows the same shape:
@@ -15,9 +36,23 @@ Each phase below follows the same shape:
 - **Goal** — what the phase produces and why it matters.
 - **Inputs** — what you need before starting.
 - **Work** — what you and the agent actually do.
-- **Prompt** — a starting prompt for your agent. Adapt it; don't treat it as magic.
+- **Run** — the skill that drives the phase (see below).
 - **Output** — the artifact created or updated. Templates live in [`templates/`](templates/).
 - **Done when** — the checklist that tells you it's safe to move on.
+
+## Skills: the prompts, packaged
+
+Every phase that involves the agent has a matching **skill** in
+[`skills/`](skills/) — a `SKILL.md` file holding the phase's prompt, the
+artifacts it reads and writes, and its completion checklist. The installer
+copies them into your project's `.claude/skills/`, so in Claude Code you run a
+phase by typing its name: `/pdev-clarify`, `/pdev-plan`, `/pdev-build A.2`.
+
+`/pdev` is the guide: it reads your artifacts, works out which phase you're in,
+and tells you what to do next. Use it whenever you've lost your place.
+
+Skills are plain markdown. With an agent that doesn't load `SKILL.md` files,
+paste the body of the skill as your prompt — it works the same way.
 
 ## A note on artifacts
 
@@ -26,15 +61,18 @@ project's version control. The agent reads them at the start of every task to
 recover context, and updates them whenever reality drifts from the plan. An
 artifact that's out of date is worse than no artifact — it lies to the agent.
 
-A good habit: at the end of any phase, ask the agent _"what in our existing
-artifacts is now wrong or incomplete?"_ and fix it before moving on.
+Don't rely on discipline alone to keep them current. Every build task ends with
+the agent updating the plan and the decision log, and the installer adds an
+optional Claude Code hook that reminds the agent when code changed but no
+artifact did.
 
 ---
 
 # Stage 1 — Plan
 
-The goal of this stage is to make every important decision _before_ code exists,
-when changing your mind is free.
+The goal of this stage is to make the important decisions while they're still
+cheap to change — and to test the risky ones for real before committing to
+them.
 
 ## Phase 1: Define the scope
 
@@ -46,9 +84,10 @@ involving the agent. This is the seed everything else grows from.
 **Work.** Open [`templates/project-scope.md`](templates/project-scope.md) and
 fill in the Problem, Solution, and Features sections with your initial thinking.
 Be rough. Don't polish. The point is to externalize what's in your head so it
-can be examined.
+can be examined — and to make sure the starting point is _yours_, not the
+agent's.
 
-**Prompt.** _(none — this phase is just you)_
+**Run.** _(nothing — this phase is just you)_
 
 **Output.** `project-scope.md`, first draft.
 
@@ -66,25 +105,10 @@ Surface the gaps, contradictions, and unspoken assumptions now.
 
 **Work.** Hand the scope to the agent and let it interrogate you. Its job here
 is _not_ to agree with you — it's to find what you haven't thought through.
-Answer its questions, discuss, and then have it rewrite `project-scope.md` to
-reflect what you concluded together. Expect this to take a few rounds.
+Answer its questions in rounds. When the questions run dry, the agent rewrites
+`project-scope.md` to reflect what you concluded together.
 
-**Prompt.**
-
-```
-Read project-scope.md. Review it critically and ask me clarifying questions.
-Find gaps, ambiguities, and things I haven't thought through — especially
-around users, edge cases, and what's explicitly out of scope. Don't suggest
-solutions yet. Ask one focused batch of questions at a time.
-```
-
-Then, once the discussion settles:
-
-```
-Update project-scope.md to reflect everything we just discussed. Keep it
-concise. Add an "Out of scope" and an "Open questions" section if we have
-material for them.
-```
+**Run.** `/pdev-clarify` — [skill](skills/pdev-clarify/SKILL.md)
 
 **Output.** `project-scope.md`, refined.
 
@@ -103,242 +127,250 @@ worth shipping. Everything else becomes "later."
 
 **Work.** With the agent, sort the features into "MVP" and "later." Pressure-test
 the MVP line: for each feature you want to include, ask whether the product
-still solves the core problem without it. If yes, it's not MVP. Record the
-result in [`templates/mvp.md`](templates/mvp.md).
+still solves the core problem without it. If yes, it's not MVP. Write success
+criteria that are **concrete enough to become automated tests** — they will, in
+phase 6. Name the assumptions the MVP is betting on, and mark the ones that are
+both risky and testable.
 
-**Prompt.**
+**Run.** `/pdev-mvp` — [skill](skills/pdev-mvp/SKILL.md)
 
-```
-Based on project-scope.md, help me define the MVP — the smallest version that
-still solves the core problem and is worth shipping. For each feature, argue
-whether it's truly MVP or can wait. Challenge me when I'm gold-plating. Then
-draft mvp.md with the MVP scope, what's deferred, and the success criteria that
-tell us the MVP worked.
-```
-
-**Output.** `mvp.md`.
+**Output.** [`mvp.md`](templates/mvp.md).
 
 **Done when.**
 
 - [ ] The MVP feature list is shorter than your instinct wanted it to be.
-- [ ] You've written down what success looks like for the MVP.
+- [ ] Every success criterion is concrete enough to check automatically, or is
+      explicitly marked as a manual check.
 - [ ] Deferred features are recorded so they aren't lost.
+- [ ] Risky assumptions are listed, and the ones worth a spike are marked.
 
-## Phase 4: Choose the tech stack
+## Phase 4: Spike the unknowns _(skip if there are none)_
+
+**Goal.** Answer the riskiest open questions with throwaway code instead of
+debate — before they shape the stack and the plan.
+
+**Inputs.** `mvp.md` (the assumptions marked for a spike).
+
+**Work.** Pick the one to three questions where being wrong would hurt most:
+_Does the core interaction actually feel right? Can this API do what we need?
+Is this fast enough? Will the model handle this input?_ For each, have the
+agent build the smallest possible prototype that answers it — in a scratch
+branch or directory, ignoring quality entirely. Look at the result yourself.
+Record the question, what you tried, and what you learned in
+[`templates/spikes.md`](templates/spikes.md). **Then delete the code.** Keep the
+conclusions, not the prototype — prototype code that sneaks into the real
+codebase carries every shortcut you took to write it fast.
+
+Skip this phase if nothing in the MVP is genuinely uncertain. A familiar CRUD
+app on a familiar stack doesn't need a spike.
+
+**Run.** `/pdev-spike` — [skill](skills/pdev-spike/SKILL.md)
+
+**Output.** `spikes.md`; updated `mvp.md` assumptions; entries in
+`decisions.md` for anything a spike settled.
+
+**Done when.**
+
+- [ ] Each spike answered its question (yes, no, or "not like that").
+- [ ] Findings are recorded in `spikes.md`, and `mvp.md` reflects them.
+- [ ] The spike code is deleted or clearly fenced off from the real project.
+
+## Phase 5: Choose the tech stack
 
 **Goal.** Decide what you're building it with — and why — before any setup.
 
-**Inputs.** `project-scope.md`, `mvp.md`.
+**Inputs.** `project-scope.md`, `mvp.md`, `spikes.md` if you ran any.
 
 **Work.** Ask the agent to propose a stack that fits the MVP, your constraints
-(team skills, hosting, budget, timeline), and the non-functional needs (scale,
-latency, offline, etc.). Make it justify each choice and name the trade-offs.
-You pick. Record the decision and the reasoning in
-[`templates/tech-stack.md`](templates/tech-stack.md), and log the significant
+(skills, hosting, budget, timeline), the non-functional needs (scale, latency,
+offline, etc.), and what the spikes taught you. Make it justify each choice and
+name the trade-offs. Include **verification tooling** — test runner, type
+checker, linter, CI — as first-class layers: the agent leans on them
+constantly, and a stack with fast, strict feedback makes it far more reliable.
+You pick. Record the decision in
+[`templates/tech-stack.md`](templates/tech-stack.md) and log the significant
 calls in [`templates/decisions.md`](templates/decisions.md).
 
-**Prompt.**
-
-```
-Based on project-scope.md and mvp.md, propose a tech stack. My constraints are:
-[skills, hosting, budget, timeline, anything else]. For each layer (language,
-framework, data store, hosting, key libraries) give one primary recommendation
-and one alternative, with the trade-offs. Flag anything that's hard to change
-later. Don't pad the stack — fewer moving parts is better for an MVP.
-```
+**Run.** `/pdev-stack` — [skill](skills/pdev-stack/SKILL.md)
 
 **Output.** `tech-stack.md`; entries in `decisions.md`.
 
 **Done when.**
 
 - [ ] Every layer of the stack has a chosen option and a one-line rationale.
+- [ ] Verification tooling (tests, types/lint, CI) is chosen, not left for later.
 - [ ] Hard-to-reverse choices were identified and made deliberately.
 - [ ] You could explain the stack to someone else without the agent's help.
 
-## Phase 5: Create the implementation plan
+## Phase 6: Plan the build
 
-**Goal.** Break the MVP into small, ordered, independently verifiable tasks,
-grouped into phases. This plan becomes the spine of the build stage.
+**Goal.** Break the MVP into tasks an agent can complete and _prove_ complete
+on its own — and decide up front how each one gets verified and reviewed. This
+plan is the spine of the build stage, and the most important thing you review
+in the whole framework.
 
 **Inputs.** `project-scope.md`, `mvp.md`, `tech-stack.md`.
 
-**Work.** Ask the agent to draft the plan into
-[`templates/implementation-plan.md`](templates/implementation-plan.md). Review
-it hard: tasks should be small enough to review in a single diff, ordered so
-each builds on working code before it, and sequenced so something runs
-end-to-end as early as possible. Rework anything vague.
+**Work.** The agent drafts two artifacts together:
 
-**Prompt.**
+- [`implementation-plan.md`](templates/implementation-plan.md) — tasks grouped
+  into phases, ordered so something runs end-to-end early. Every task gets:
+  - an **acceptance check** — a test or command that passes when the task is
+    done. Not "works correctly"; something runnable.
+  - its **dependencies** and a **parallel group**, so tasks that don't depend
+    on each other — and don't touch the same files — can run at the same time.
+  - a **review level**: `auto` (gates plus a quick skim are enough) or `human`
+    (you read the diff carefully), with the reason.
+- [`test-plan.md`](templates/test-plan.md) — the verification strategy: the
+  gates every change must pass, how each MVP success criterion maps to a test,
+  which user flows get end-to-end coverage, and what's deliberately not tested.
 
-```
-Create an implementation plan in implementation-plan.md. Break the MVP into
-small tasks — each one reviewable in a single sitting — and group them into
-phases. Order them so we have something running end-to-end as early as
-possible, and so every task builds on already-working code. Mark dependencies
-between tasks. Each task should have a clear "done when" check.
-```
+Then review the plan hard. Size tasks by **verifiability**, not by how much
+code you can read in one sitting: a task is the right size when it has one
+clear acceptance check and the agent can finish it without coming back to ask.
+Anything that touches data formats, auth, money, public interfaces, or
+deployment should be marked `human`.
 
-**Output.** `implementation-plan.md`.
+**Run.** `/pdev-plan` — [skill](skills/pdev-plan/SKILL.md)
+
+**Output.** `implementation-plan.md`; `test-plan.md`.
 
 **Done when.**
 
-- [ ] No task is so big you can't picture its diff.
+- [ ] Every task has an acceptance check that can be run, not just read.
+- [ ] Every MVP success criterion maps to at least one task's acceptance check
+      (or a documented manual check).
 - [ ] The ordering produces a runnable thing early, not only at the end.
-- [ ] Each task has a verifiable completion check.
+- [ ] Dependencies, parallel groups, and review levels are set on every task.
+- [ ] You've read the whole plan yourself and would be comfortable with an
+      agent executing it.
 
 ---
 
 # Stage 2 — Build
 
-Now code exists. The discipline here is to keep the build loop tight and the
-artifacts in sync.
+Now code exists. The discipline here is to let the agent work autonomously
+_inside_ guardrails you set up deliberately — and to keep the artifacts in sync.
 
-## Phase 6: Set up the project
+## Phase 7: Set up the project
 
-**Goal.** Create the project's initial structure _and_ the agent's working
-context, so every later task starts from solid ground.
+**Goal.** Create the project's skeleton, the automated gates, and the agent's
+working context, so every later task starts from solid ground.
 
-**Inputs.** `tech-stack.md`, `implementation-plan.md`.
+**Inputs.** `tech-stack.md`, `implementation-plan.md`, `test-plan.md`.
 
 **Work.** Have the agent scaffold the repo per the tech stack: directory
-structure, dependency manifest, formatter/linter, test runner, a "hello world"
-that actually runs, and a `.gitignore`. Then create
-[`templates/AGENTS.md`](templates/AGENTS.md) at the repo root — this is the file
-the agent reads first on every future task. It points at the other artifacts and
-records the conventions and guardrails for this project. Make the first commit.
+structure, dependency manifest, formatter/linter, type checker, test runner, a
+minimal entry point that actually runs, `.gitignore`, and **CI that runs every
+gate from `test-plan.md` on each push**. Then fill in
+[`AGENTS.md`](templates/AGENTS.md) at the repo root — the file every agent
+reads first. It records how to run and check the project, the conventions, what
+the agent may do on its own, what needs a human, and where the artifacts live.
+`CLAUDE.md` simply imports it (`@AGENTS.md`), so there's one source of project
+context for every agent.
 
-**Prompt.**
+**Run.** `/pdev-setup` — [skill](skills/pdev-setup/SKILL.md)
 
-```
-Scaffold the project per tech-stack.md: directory structure, dependency
-manifest, linter/formatter, test runner, a minimal runnable entry point, and a
-.gitignore. Keep it minimal — no features yet. Then create AGENTS.md at the repo
-root: a short project overview, how to run and test the project, the coding
-conventions we'll follow, guardrails (what you should never do without asking),
-and a map of where each planning artifact lives.
-```
-
-**Output.** A runnable, committed project skeleton; `AGENTS.md`.
+**Output.** A runnable, committed skeleton; CI; a filled-in `AGENTS.md`.
 
 **Done when.**
 
-- [ ] The skeleton runs and the test command passes (even with zero real tests).
-- [ ] `AGENTS.md` exists and points to every planning artifact.
+- [ ] The skeleton runs, and every gate command passes (even with zero real tests).
+- [ ] CI runs the same gates and is green.
+- [ ] `AGENTS.md` lists the gate commands, the autonomy rules, the human-review
+      triggers, and every artifact's location.
 - [ ] It's all committed.
 
-## Phase 7: Implement — the build loop
+## Phase 8: Build — the loop
 
-**Goal.** Turn the plan into working software, one task at a time, without
-losing control of what the agent is doing.
+**Goal.** Turn the plan into working software, task by task, with the agent
+working autonomously and you spending attention where risk is.
 
-**Inputs.** `implementation-plan.md`, `AGENTS.md`, and the rest of the artifacts.
+**Inputs.** `implementation-plan.md`, `test-plan.md`, `AGENTS.md`, and the rest
+of the artifacts.
 
-**Work.** This is a loop. For each task in the implementation plan:
+**Work.** For each task (or each parallel group of tasks):
 
-1. **Frame.** Point the agent at the task and the artifacts it needs. One task
-   at a time — resist bundling.
-2. **Build.** Let the agent implement it.
-3. **Review.** Read the diff yourself. Check it against the task's "done when"
-   and the project's conventions. Push back on anything you wouldn't have
-   written.
-4. **Verify.** Run it. Run the tests. (Detailed testing is phase 8, but never
-   advance a task that doesn't run.)
-5. **Record.** Check the task off in `implementation-plan.md`. If anything
-   changed — a decision, a deviation from the plan — update the relevant
-   artifact and log it in `decisions.md`.
-6. **Commit.** One task, one focused commit.
+1. **Start.** Run `/pdev-build <task-id>`. Independent tasks in the same
+   parallel group can run at the same time in separate agent sessions, each on
+   its own branch or worktree.
+2. **Check first.** The agent writes the task's acceptance check as a test and
+   confirms it fails — proving the check actually tests something.
+3. **Build until green.** The agent implements and iterates until the
+   acceptance check, the full suite, and every other gate pass. It may not
+   weaken, skip, or delete a check to get there.
+4. **Self-review.** The agent reviews its own diff with fresh eyes — ideally a
+   separate review pass or reviewer agent, not the same context that wrote the
+   code — and fixes what it finds.
+5. **Record.** The agent checks the task off in `implementation-plan.md`, logs
+   any decision or deviation in `decisions.md`, and reports back: what changed,
+   anything it was unsure of, and anything that deviated from the plan.
+6. **Review — in proportion to risk.** For `auto` tasks, read the report and
+   skim the diff. For `human` tasks, read the diff line by line and push back
+   on anything you wouldn't have written.
+7. **Commit.** One task, one focused commit.
 
-Then repeat. If a task turns out bigger than expected, stop and split it in the
-plan rather than letting one diff balloon.
+The agent stops and asks instead of pushing on when: the spec is ambiguous, the
+task is turning out bigger than planned, it hits a human-review trigger the
+plan didn't anticipate, or the only way to pass a check is to change the check.
+When a task is bigger than expected, split it in the plan rather than letting
+one change balloon.
 
-**Prompt.** _(per task)_
+**Run.** `/pdev-build <task-id>` — [skill](skills/pdev-build/SKILL.md)
 
-```
-Read AGENTS.md and implementation-plan.md. Implement task [X.Y]: [name]. Use
-only the context in our artifacts — if something is unspecified, ask before
-assuming. Keep the change scoped to this task. When you're done, tell me how to
-verify it and what to review.
-```
-
-**Output.** Working, committed code, task by task; `implementation-plan.md` kept
-current; `decisions.md` updated as you go.
+**Output.** Working, committed code, task by task; `implementation-plan.md`
+kept current; `decisions.md` updated as you go.
 
 **Done when.**
 
 - [ ] Every MVP task in the plan is checked off.
-- [ ] Every task was reviewed and committed individually.
+- [ ] Every acceptance check exists as an automated test (or a documented
+      manual check) and passes.
+- [ ] Every `human` task was reviewed line by line.
 - [ ] The artifacts still match what was actually built.
-
-## Phase 8: Test & verify
-
-**Goal.** Prove the MVP does what `mvp.md` says it does — and keep it provable
-as it changes.
-
-**Inputs.** Working code; `mvp.md`; `implementation-plan.md`.
-
-**Work.** Draft [`templates/test-plan.md`](templates/test-plan.md) with the
-agent: what to test, at what level (unit, integration, end-to-end), and which
-flows are critical enough to never break. Have the agent write the tests,
-prioritizing the MVP success criteria and the risky parts. Run them. Fix what
-breaks. Decide what level of automated coverage is enough for an MVP — and
-write that decision down rather than chasing 100%.
-
-**Prompt.**
-
-```
-Based on mvp.md and the code we've built, draft test-plan.md: what we test, at
-what level, and which user flows are critical. Then write tests for the MVP
-success criteria and the riskiest areas first. Tell me what you chose not to
-test and why.
-```
-
-**Output.** `test-plan.md`; an automated test suite; a green test run.
-
-**Done when.**
-
-- [ ] Every MVP success criterion from `mvp.md` has a test or a deliberate,
-      documented reason it doesn't.
-- [ ] The critical user flows are covered end-to-end.
-- [ ] The full suite passes.
 
 ---
 
 # Stage 3 — Ship
 
-The product works on your machine. This stage makes it safe to put in front of
-real users.
+The product works and its checks pass. This stage makes it safe to put in front
+of real users.
 
-## Phase 9: Review & harden
+## Phase 9: Verify & harden
 
-**Goal.** Close the gap between "it works" and "it's ready" — security, edge
-cases, error handling, and documentation.
+**Goal.** Close the gap between "the checks pass" and "it's ready": prove the
+real user flows work end to end, then hunt for what the checks don't cover —
+security holes, edge cases, poor error handling, missing docs.
 
 **Inputs.** Working, tested code; all artifacts.
 
-**Work.** Run a deliberate review pass with the agent across these angles:
+**Work.** Two passes:
 
-- **Security** — secrets handling, input validation, authn/authz, dependency risks.
-- **Edge cases** — empty states, large inputs, concurrent use, network failure.
-- **Error handling** — does it fail loudly and recoverably, or silently and badly?
-- **Docs** — a README that lets someone else run it; `AGENTS.md` still accurate.
+- **Verify.** Confirm every critical flow in `test-plan.md` has end-to-end
+  coverage and passes. Then actually _use_ the product — or have the agent
+  drive it (a browser, the CLI, the API) — the way a new user would. Passing
+  tests prove what you thought to check; using it finds what you didn't.
+- **Harden.** Run an adversarial review across these angles:
+  - **Security** — secrets handling, input validation, authn/authz, dependency risks.
+  - **Edge cases** — empty states, large inputs, concurrent use, network failure.
+  - **Error handling** — does it fail loudly and recoverably, or silently and badly?
+  - **Docs** — a README that lets someone else run it; `AGENTS.md` still accurate.
 
-Triage what the review finds: fix what blocks launch now, log the rest in
-`decisions.md` or as deferred items.
+  Use a fresh agent context for the review — one that didn't write the code —
+  and dedicated security-review tooling if your agent has it.
 
-**Prompt.**
+Triage what the review finds: fix blockers now (each fix gets a regression
+test), and log the rest in `decisions.md` or as deferred items.
 
-```
-Do a pre-launch review of the codebase against mvp.md. Go angle by angle:
-security, edge cases, error handling, and documentation. For each finding, rate
-it blocker / should-fix / nice-to-have, and explain the risk. Don't fix anything
-yet — give me the list first so I can triage.
-```
+**Run.** `/pdev-harden` — [skill](skills/pdev-harden/SKILL.md)
 
-**Output.** A triaged findings list; fixes for blockers; an accurate README.
+**Output.** End-to-end coverage of critical flows; a triaged findings list;
+fixes for blockers; an accurate README.
 
 **Done when.**
 
-- [ ] No known blocker-level issues remain.
+- [ ] Every critical flow passes end-to-end, and you've used the product yourself.
+- [ ] No known blocker-level issues remain, and each fix has a regression test.
 - [ ] Secrets and config are handled properly, not hard-coded.
 - [ ] A new person could clone, run, and understand the project from the README.
 
@@ -352,53 +384,46 @@ not as a one-off.
 **Work.** Draft [`templates/deployment.md`](templates/deployment.md) with the
 agent: target environment, build and release steps, environment variables and
 secrets, how to roll back, and how you'll know it's healthy. Automate the
-release path (CI/CD or a documented script) so deploying again is boring. Do a
-real deploy. Verify it against `deployment.md`'s health checks.
+release path in CI so deploying again is boring, and make the health checks
+runnable so the agent (or CI) can verify a deploy, not just you. Do a real
+deploy. Verify it against the health checks.
 
-**Prompt.**
+Deploying is outward-facing and sometimes hard to undo: keep the actual
+production release a step you trigger or approve, even when the agent prepared
+everything.
 
-```
-Based on tech-stack.md, draft deployment.md: target environment, step-by-step
-build and release process, required environment variables and how secrets are
-managed, the rollback procedure, and the health checks that confirm a good
-deploy. Then help me automate the release path so future deploys are repeatable.
-```
+**Run.** `/pdev-deploy` — [skill](skills/pdev-deploy/SKILL.md)
 
-**Output.** `deployment.md`; an automated/documented release path; a live deploy.
+**Output.** `deployment.md`; an automated release path; a live deploy.
 
 **Done when.**
 
 - [ ] The product is reachable by its intended users.
-- [ ] Deploying again is a repeatable process, not improvisation.
-- [ ] You know how to roll back and how to tell if it's healthy.
+- [ ] Deploying again is a repeatable, automated process, not improvisation.
+- [ ] You know how to roll back, and the health checks can be run by a command.
 
 ## Phase 11: Iterate
 
 **Goal.** Turn what you learn from real usage into the next iteration — and keep
 the artifacts honest.
 
-**Inputs.** A live product; user feedback; the full artifact set.
+**Inputs.** A live product; user feedback; usage data; the full artifact set.
 
 **Work.** Collect feedback and observed behavior. With the agent, triage it into
-bugs, improvements, and new features. Bugs re-enter the build loop directly.
-Improvements and new features go back to **Phase 1**: update `project-scope.md`,
-revisit the MVP/scope line, and plan the next iteration. The deferred list from
-phase 3 gets revisited here too.
+bugs, improvements, and new features. Bugs re-enter the build loop directly —
+each one starts as a failing test that reproduces it. Improvements and new
+features go back to **Phase 1**: update `project-scope.md`, revisit the
+MVP/scope line, and plan the next iteration. The deferred list from phase 3
+gets revisited here too.
 
-**Prompt.**
-
-```
-Here is the feedback and usage data from the live product: [paste]. Help me
-triage it into bugs, improvements, and new features. For each, note the user
-impact and rough effort. Then recommend what the next iteration should focus on,
-and which artifacts need updating to reflect it.
-```
+**Run.** `/pdev-iterate` — [skill](skills/pdev-iterate/SKILL.md)
 
 **Output.** A triaged backlog; updated artifacts; a focus for the next loop.
 
 **Done when.**
 
 - [ ] Feedback is triaged, not sitting in a pile.
+- [ ] Every bug to fix has a reproducing test or a task that starts with one.
 - [ ] The next iteration's focus is decided and scoped.
 - [ ] `project-scope.md` and the deferred list reflect current reality.
 
@@ -412,14 +437,49 @@ These hold in every phase:
 
 - **Context before code.** The agent reads the artifacts before it builds. If
   the artifacts are wrong, the build is wrong.
-- **Small steps.** One task, one diff, one commit. Big diffs hide mistakes.
+- **Checks before code.** Every task's "done" is something the agent can run.
+  An executable check keeps an autonomous agent honest; prose doesn't.
 - **You decide, the agent drafts.** The agent proposes options and trade-offs;
   the decision and its rationale are yours, and they get written down.
-- **Review every diff.** The agent is fast, not infallible. Reading its output
-  is not optional.
+- **Review in proportion to risk.** Gates and agent self-review on every
+  change; your line-by-line attention on the plan and on anything hard to
+  reverse.
+- **Never weaken a check to pass it.** If a test seems wrong, that's a
+  conversation, not an edit.
+- **Small, verifiable units.** One task, one acceptance check, one commit. Big,
+  vague tasks are where autonomous agents drift.
 - **Keep artifacts in sync.** The moment reality diverges from a document, fix
   the document. A stale artifact actively misleads the agent.
 - **Log the why.** `decisions.md` captures decisions and reasoning across every
   phase. Future-you and the agent will both need it.
 - **Make the agent disagree with you.** Its most valuable move is finding the
   flaw you can't see — ask for that explicitly.
+
+---
+
+# Appendix: when the product itself uses AI
+
+If your product calls a language model — a chatbot, a summarizer, an agent, a
+classifier — a few things need extra care, because model output isn't
+deterministic and a test that passes once can fail tomorrow.
+
+- **Phase 3 (MVP).** Write success criteria as measurable quality bars ("90% of
+  the sample support tickets are routed to the right queue"), plus cost and
+  latency budgets per request.
+- **Phase 4 (Spike).** Almost always worth running: try the model on real
+  inputs before you design around it. This is where "can the model actually do
+  this?" gets answered.
+- **Phase 5 (Stack).** Record the model, the provider, and the reason. Treat a
+  model change like a dependency upgrade — logged in `decisions.md`, never
+  silent.
+- **Phase 6 (Plan).** Plan an **eval set**: a versioned collection of
+  representative inputs with expected outcomes or grading rules. Evals are this
+  product's acceptance checks. Keep prompts in version-controlled files, not
+  scattered strings.
+- **Phase 8 (Build).** Prompt changes are code changes: they run the evals
+  before they land.
+- **Phase 9 (Harden).** Add AI-specific angles: prompt injection, leaking data
+  across users, harmful or off-topic output, behavior when the provider is slow
+  or down, and runaway cost.
+- **Phase 10–11 (Deploy, Iterate).** Log inputs and outputs (respecting
+  privacy), watch cost and latency, and turn real failures into new eval cases.

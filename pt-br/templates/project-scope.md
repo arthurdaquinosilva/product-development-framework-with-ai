@@ -2,8 +2,8 @@
 
 <!--
   Fases 1–2 do framework. Preencha Problema / Solução / Features você mesmo
-  primeiro, de forma bruta. Depois peça ao agente para revisar, fazer perguntas
-  de esclarecimento e reescrever este arquivo com você.
+  primeiro, de forma bruta. Depois rode /pdev-clarify: o agente revisa, faz
+  perguntas de esclarecimento e reescreve este arquivo com você.
   Veja FRAMEWORK.md → Fase 1 e Fase 2.
 -->
 
