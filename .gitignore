@@ -11,6 +11,6 @@ Thumbs.db
 .env
 .env.*
 
-# This repo is documentation only — it has no build output.
-# When you copy templates/ into a real project, add that project's
-# own .gitignore there.
+# This repo has no build output or dependencies — the installer uses only
+# Node's standard library.
+node_modules/

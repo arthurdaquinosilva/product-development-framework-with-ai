@@ -1,19 +1,26 @@
 # Product Development Framework With AI
 
-A repeatable, agent-agnostic framework for taking a product from a rough idea
-to a deployed release — with an AI coding agent as your collaborator at every
-step.
+A repeatable framework for taking a product from a rough idea to a deployed
+release — with an AI coding agent as your collaborator at every step.
 
 ## Quick start
 
-From inside your project directory:
+Clone this repo, then install the `pdev-init` command once (requires Node.js 16+):
 
 ```
-npx pdev-init
+bash install.sh
 ```
 
-This scaffolds the framework's artifact templates into your project. Then work
-through the 11 phases — see the full guide for your language below.
+From inside any project directory:
+
+```
+pdev-init
+```
+
+This scaffolds the artifact templates into your project and installs the phase
+skills for Claude Code. Open the project in Claude Code and run `/pdev` — it
+tells you which phase you're in and what to do next. Re-running `pdev-init` in
+an existing project upgrades the skills without touching your artifacts.
 
 ---
 

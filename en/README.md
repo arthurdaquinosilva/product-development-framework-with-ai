@@ -5,19 +5,19 @@
 - [Why this exists](#why-this-exists)
 - [The lifecycle](#the-lifecycle)
 - [How to use it](#how-to-use-it)
-- [Guided mode](#guided-mode)
+- [Using other agents](#using-other-agents)
 - [Repository layout](#repository-layout)
 - [Principles](#principles)
 - [License](#license)
 <!-- /TOC -->
 
-A repeatable, agent-agnostic framework for taking a product from a rough idea
-all the way to a deployed release — with an AI coding agent as your collaborator
-at every step.
+A repeatable framework for taking a product from a rough idea all the way to a
+deployed release — with an AI coding agent as your collaborator at every step.
 
 This is not a tool or a library. It is a **process**, plus a set of **artifact
-templates** and **prompts**. Use it with any capable coding agent (Claude Code,
-Cursor, or similar).
+templates** and **skills** (the prompts for each phase, packaged so your agent
+can run them). It's built for Claude Code and works with any capable coding
+agent.
 
 ## Why this exists
 
@@ -26,71 +26,86 @@ context they are given. Jumping straight to _"build me an app"_ produces
 throwaway work: the agent guesses at scope, invents requirements, and picks a
 stack you never agreed to.
 
+And now that agents work autonomously for long stretches, a second problem
+matters just as much: **how does the agent know it's done?** An agent that can
+only read prose stops when it _thinks_ it's finished. An agent with an
+executable check keeps going until the check passes.
+
 This framework front-loads the thinking — scope, requirements, MVP, stack, plan
-— into durable documents the agent reads _before_ it writes a line of code. Then
-it keeps those documents in sync through build, test, and deploy, so the agent
-never loses the plot.
+— into durable documents the agent reads _before_ it writes code, turns every
+task's definition of done into a check the agent can run, and keeps the
+documents in sync through build, verification, and deploy.
 
 ## The lifecycle
 
-Three stages, eleven phases. Each phase has a goal, a prompt, and an artifact.
+Three stages, eleven phases. Each phase has a goal, a skill, and an artifact.
 
 ### Plan
 
-1. **Define the scope** — what are we building and why?
+1. **Define the scope** — what are we building and why? _(just you)_
 2. **Clarify the requirements** — what exactly should it do?
-3. **Define the MVP** — what is the smallest version that still solves the problem?
-4. **Choose the tech stack** — what do we build it with?
-5. **Create the implementation plan** — what gets built first, second, third?
+3. **Define the MVP** — what's the smallest version worth shipping, and how will we know it worked?
+4. **Spike the unknowns** — answer the riskiest questions with throwaway code. _(optional)_
+5. **Choose the tech stack** — what do we build it with, including how we verify it?
+6. **Plan the build** — tasks with acceptance checks, parallel groups, and review levels.
 
 ### Build
 
-6. **Set up the project** — scaffold the repo and the agent's working context.
-7. **Implement (the build loop)** — one task at a time, reviewed and committed.
-8. **Test & verify** — prove each piece works.
+7. **Set up the project** — skeleton, automated gates in CI, and the agent's working context.
+8. **Build (the loop)** — the agent builds each task check-first until every gate passes; you review in proportion to risk.
 
 ### Ship
 
-9. **Review & harden** — security, edge cases, error handling, docs.
-10. **Deploy** — get it running where users can reach it.
-11. **Iterate** — gather feedback and feed it back into the plan.
+9. **Verify & harden** — end-to-end flows, real use, and an adversarial review.
+10. **Deploy** — a repeatable, automated release with runnable health checks.
+11. **Iterate** — triage feedback and feed it back into the plan.
 
-Read [FRAMEWORK.md](FRAMEWORK.md) for the full phase-by-phase walkthrough.
+Read [FRAMEWORK.md](FRAMEWORK.md) for the full phase-by-phase walkthrough, and
+[EXAMPLE.md](EXAMPLE.md) for a complete worked example.
 
 ## How to use it
 
-The fastest way to scaffold the framework into your project — no clone, no
-install, always the latest version:
+Clone this repo and install the `pdev-init` command once (requires Node.js 16+):
 
 ```
-cd your-project
-npx pdev-init
+bash install.sh
 ```
 
-Prefer a local install? Clone this repo, run `bash install.sh` once, then run
-`pdev-init` from inside any project directory. (Or skip the install entirely
-and run `bash setup.sh` from the repo root.)
+Then, from inside any project directory:
 
-Once the files are in place:
+```
+pdev-init
+```
 
-1. Open [FRAMEWORK.md](FRAMEWORK.md) and work through the phases in order.
-2. At each phase: fill in what you already know, then hand the artifact to your
-   agent with the phase's prompt to refine it together.
-3. Commit the artifacts. They are **living documents** — the agent reads them for
-   context on every task and updates them as the product evolves.
+It asks for a language, a target directory, and a docs folder name (or pass
+`--lang`, `--dir`, `--docs`, `--yes`), then:
 
-See [EXAMPLE.md](EXAMPLE.md) for a complete end-to-end walkthrough.
+- copies the artifact templates into `docs/`, and `AGENTS.md` + `CLAUDE.md`
+  into the project root;
+- installs the phase skills into `.claude/skills/`;
+- installs a small Claude Code hook that reminds the agent to update the plan
+  and decision log when code changed but no artifact did (skip skills and hook
+  with `--no-claude`).
 
-## Guided mode
+It never overwrites an artifact that already exists, so re-running it in an
+existing project is how you upgrade to the latest skills.
 
-Prefer to be walked through the framework instead of reading it yourself?
-Two options:
+Then:
 
-- **Claude Code (automatic):** copy `templates/CLAUDE.md` to your project root.
-  Claude Code reads it automatically and acts as your framework guide from the
-  first session.
-- **Any other agent:** open [GUIDE.md](GUIDE.md), paste its contents into your
-  AI session, and the agent will guide you phase by phase.
+1. Fill in `docs/project-scope.md` yourself — rough is fine.
+2. Open the project in Claude Code and run **`/pdev`**. It reads your artifacts,
+   tells you which phase you're in, and gives you the next command
+   (`/pdev-clarify`, `/pdev-plan`, `/pdev-build A.2`, …).
+3. Commit the artifacts. They are **living documents** — the agent reads them
+   for context on every task and updates them as the product evolves.
+
+## Using other agents
+
+The skills are plain markdown files (`SKILL.md`). Agents that support the
+skills format can load them from their own skills folder. With any other
+agent, paste the body of the phase's skill as your prompt — e.g. the contents
+of `.claude/skills/pdev-plan/SKILL.md` for phase 6. `AGENTS.md` is read
+natively by most coding agents; `CLAUDE.md` just imports it.
 
 ## Repository layout
 
@@ -98,27 +113,33 @@ Two options:
 README.md                      you are here
 FRAMEWORK.md                   the methodology, phase by phase
 EXAMPLE.md                     a complete worked example
-GUIDE.md                       paste this into any AI to start guided mode
 templates/
-  project-scope.md             phases 1–2 output
-  mvp.md                       phase 3 output
-  tech-stack.md                phase 4 output
-  implementation-plan.md       phase 5 output, updated through build
-  AGENTS.md                    phase 6 output — the agent's working context
-  CLAUDE.md                    phase 6 output — Claude Code native version
-  test-plan.md                 phase 8 output
-  deployment.md                phase 10 output
+  project-scope.md             phases 1–2
+  mvp.md                       phase 3
+  spikes.md                    phase 4 (optional)
+  tech-stack.md                phase 5
+  implementation-plan.md       phase 6, updated through the build
+  test-plan.md                 phase 6, extended in phase 9
+  AGENTS.md                    phase 7 — the agent's working context
+  CLAUDE.md                    imports AGENTS.md for Claude Code
+  deployment.md                phase 10
   decisions.md                 running log, updated across every phase
-LICENSE
+skills/
+  pdev/                        the guide: where am I, what's next?
+  pdev-clarify/ … pdev-iterate/  one skill per phase (2–11)
 ```
+
+The installer itself (`bin/`, `hooks/`, `install.sh`, `setup.sh`) lives at the
+repository root.
 
 ## Principles
 
 - **Context before code.** The agent reads the artifacts before it builds.
-- **Small steps.** One task at a time, each one reviewable in a single diff.
-- **Living documents.** Artifacts are updated as reality changes, not written once.
+- **Checks before code.** Every task's "done" is something the agent can run.
 - **You decide, the agent drafts.** The agent proposes; you own every decision.
-- **Review every diff.** The agent is fast, not infallible.
+- **Review in proportion to risk.** Gates on every change; your close attention
+  on the plan and on what's hard to reverse.
+- **Living documents.** Artifacts are updated as reality changes, not written once.
 
 ## License
 

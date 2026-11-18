@@ -1,14 +1,18 @@
 {
   "name": "pdev-init",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold the Product Development Framework With AI into a project",
   "bin": {
     "pdev-init": "bin/pdev-init.js"
   },
   "files": [
     "bin/",
+    "hooks/",
+    "setup.sh",
     "en/templates/",
-    "pt-br/templates/"
+    "en/skills/",
+    "pt-br/templates/",
+    "pt-br/skills/"
   ],
   "engines": {
     "node": ">=16.0.0"
@@ -19,7 +23,8 @@
     "product-development",
     "scaffold",
     "claude",
-    "cli"
+    "cli",
+    "agent-skills"
   ],
   "author": "Arthur D'Aquino",
   "license": "MIT",
@@ -30,5 +35,6 @@
   "homepage": "https://github.com/arthurdaquinosilva/product-development-framework-with-ai#readme",
   "bugs": {
     "url": "https://github.com/arthurdaquinosilva/product-development-framework-with-ai/issues"
-  }
+  },
+  "private": true
 }

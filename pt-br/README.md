@@ -5,18 +5,19 @@
 - [Por que isso existe](#por-que-isso-existe)
 - [O ciclo de vida](#o-ciclo-de-vida)
 - [Como usar](#como-usar)
-- [Modo guiado](#modo-guiado)
+- [Usando outros agentes](#usando-outros-agentes)
 - [Estrutura do repositório](#estrutura-do-repositório)
 - [Princípios](#princípios)
 - [Licença](#licença)
 <!-- /TOC -->
 
-Um framework repetível e agnóstico de agente para levar um produto de uma ideia
-bruta até um lançamento — com um agente de IA como colaborador em cada etapa.
+Um framework repetível para levar um produto de uma ideia bruta até um
+lançamento — com um agente de IA como colaborador em cada etapa.
 
 Isso não é uma ferramenta nem uma biblioteca. É um **processo**, mais um
-conjunto de **templates de artefatos** e **prompts**. Use com qualquer agente
-de IA capaz (Claude Code, Cursor, ou similar).
+conjunto de **templates de artefatos** e **skills** (os prompts de cada fase,
+empacotados para o seu agente rodar). Foi feito para o Claude Code e funciona
+com qualquer agente de código capaz.
 
 ## Por que isso existe
 
@@ -25,70 +26,89 @@ contexto que recebem. Ir direto para _"constrói um app pra mim"_ produz trabalh
 descartável: o agente adivinha o escopo, inventa requisitos e escolhe uma stack
 que você nunca aprovou.
 
+E agora que agentes trabalham de forma autônoma por longos períodos, um
+segundo problema importa tanto quanto: **como o agente sabe que terminou?** Um
+agente que só tem texto para ler para quando _acha_ que terminou. Um agente
+com uma verificação executável continua até a verificação passar.
+
 Este framework antecipa o pensamento — escopo, requisitos, MVP, stack, plano
-— em documentos duráveis que o agente lê _antes_ de escrever uma linha de
-código. Depois mantém esses documentos sincronizados ao longo do build, teste
-e deploy, para o agente nunca perder o fio.
+— em documentos duráveis que o agente lê _antes_ de escrever código,
+transforma a definição de pronto de cada tarefa numa verificação que o agente
+consegue rodar, e mantém os documentos sincronizados durante o build, a
+verificação e o deploy.
 
 ## O ciclo de vida
 
-Três estágios, onze fases. Cada fase tem um objetivo, um prompt e um artefato.
+Três estágios, onze fases. Cada fase tem um objetivo, uma skill e um artefato.
 
 ### Planejar
 
-1. **Definir o escopo** — o que estamos construindo e por quê?
+1. **Definir o escopo** — o que estamos construindo e por quê? _(só você)_
 2. **Clarificar os requisitos** — o que exatamente deve fazer?
-3. **Definir o MVP** — qual é a menor versão que ainda resolve o problema?
-4. **Escolher a stack** — com o que vamos construir?
-5. **Criar o plano de implementação** — o que é construído primeiro, segundo, terceiro?
+3. **Definir o MVP** — qual a menor versão que vale lançar, e como saberemos que funcionou?
+4. **Spikes nas incertezas** — responder as perguntas mais arriscadas com código descartável. _(opcional)_
+5. **Escolher a stack** — com o que construímos, incluindo como verificamos?
+6. **Planejar o build** — tarefas com verificações de aceite, grupos paralelos e níveis de revisão.
 
 ### Construir
 
-6. **Configurar o projeto** — estruturar o repositório e o contexto do agente.
-7. **Implementar (o loop de build)** — uma tarefa por vez, revisada e commitada.
-8. **Testar e verificar** — provar que cada parte funciona.
+7. **Configurar o projeto** — esqueleto, gates automatizados no CI e o contexto de trabalho do agente.
+8. **Construir (o loop)** — o agente constrói cada tarefa com a verificação primeiro até todos os gates passarem; você revisa na proporção do risco.
 
 ### Lançar
 
-9. **Revisar e fortalecer** — segurança, casos extremos, tratamento de erros, docs.
-10. **Fazer deploy** — colocar no ar onde os usuários podem acessar.
-11. **Iterar** — coletar feedback e alimentar de volta no plano.
+9. **Verificar e reforçar** — fluxos de ponta a ponta, uso real e uma revisão adversarial.
+10. **Deploy** — um release repetível e automatizado, com health checks executáveis.
+11. **Iterar** — priorizar o feedback e alimentá-lo de volta no plano.
 
-Leia [FRAMEWORK.md](FRAMEWORK.md) para o guia completo fase a fase.
+Leia o [FRAMEWORK.md](FRAMEWORK.md) para o passo a passo completo de cada
+fase, e o [EXAMPLE.md](EXAMPLE.md) para um exemplo completo.
 
 ## Como usar
 
-A forma mais rápida de gerar o framework no seu projeto — sem clonar, sem
-instalar, sempre a versão mais recente:
+Clone este repositório e instale o comando `pdev-init` uma vez (requer
+Node.js 16+):
 
 ```
-cd seu-projeto
-npx pdev-init
+bash install.sh
 ```
 
-Prefere uma instalação local? Clone este repositório, rode `bash install.sh`
-uma vez, depois rode `pdev-init` de dentro de qualquer diretório de projeto.
-(Ou pule a instalação e rode `bash setup.sh` a partir da raiz do repositório.)
+Depois, de dentro de qualquer diretório de projeto:
 
-Com os arquivos no lugar:
+```
+pdev-init
+```
 
-1. Abra o [FRAMEWORK.md](FRAMEWORK.md) e percorra as fases em ordem.
-2. Em cada fase: preencha o que você já sabe, depois passe o artefato pro agente
-   com o prompt da fase para refinarem juntos.
+Ele pergunta o idioma, o diretório alvo e o nome da pasta de documentos (ou
+passe `--lang`, `--dir`, `--docs`, `--yes`), e então:
+
+- copia os templates de artefatos para `docs/`, e o `AGENTS.md` + `CLAUDE.md`
+  para a raiz do projeto;
+- instala as skills das fases em `.claude/skills/`;
+- instala um pequeno hook do Claude Code que lembra o agente de atualizar o
+  plano e o log de decisões quando o código mudou mas nenhum artefato mudou
+  (pule skills e hook com `--no-claude`).
+
+Ele nunca sobrescreve um artefato que já existe, então rodá-lo de novo num
+projeto existente é a forma de atualizar para as skills mais recentes.
+
+Depois:
+
+1. Preencha o `docs/project-scope.md` você mesmo — informal está ótimo.
+2. Abra o projeto no Claude Code e rode **`/pdev`**. Ele lê seus artefatos,
+   diz em qual fase você está e te dá o próximo comando (`/pdev-clarify`,
+   `/pdev-plan`, `/pdev-build A.2`, …).
 3. Commite os artefatos. Eles são **documentos vivos** — o agente os lê para
    recuperar contexto em cada tarefa e os atualiza conforme o produto evolui.
 
-Veja [EXAMPLE.md](EXAMPLE.md) para um exemplo completo de ponta a ponta.
+## Usando outros agentes
 
-## Modo guiado
-
-Prefere ser guiado pelo framework em vez de lê-lo você mesmo? Duas opções:
-
-- **Claude Code (automático):** copie `templates/CLAUDE.md` para a raiz do seu
-  projeto. O Claude Code lê automaticamente e age como seu guia do framework
-  desde a primeira sessão.
-- **Qualquer outro agente:** abra [GUIDE.md](GUIDE.md), cole o conteúdo na sua
-  sessão de IA e o agente te guiará fase a fase.
+As skills são arquivos markdown simples (`SKILL.md`). Agentes que suportam o
+formato de skills conseguem carregá-las da sua própria pasta de skills. Com
+qualquer outro agente, cole o corpo da skill da fase como prompt — por
+exemplo, o conteúdo de `.claude/skills/pdev-plan/SKILL.md` para a fase 6. O
+`AGENTS.md` é lido nativamente pela maioria dos agentes de código; o
+`CLAUDE.md` só o importa.
 
 ## Estrutura do repositório
 
@@ -96,27 +116,35 @@ Prefere ser guiado pelo framework em vez de lê-lo você mesmo? Duas opções:
 README.md                      você está aqui
 FRAMEWORK.md                   a metodologia, fase a fase
 EXAMPLE.md                     um exemplo completo e detalhado
-GUIDE.md                       cole no seu agente para ativar o modo guiado
 templates/
-  project-scope.md             saída das fases 1–2
-  mvp.md                       saída da fase 3
-  tech-stack.md                saída da fase 4
-  implementation-plan.md       saída da fase 5, atualizado durante o build
-  AGENTS.md                    saída da fase 6 — contexto de trabalho do agente
-  CLAUDE.md                    saída da fase 6 — versão nativa para Claude Code
-  test-plan.md                 saída da fase 8
-  deployment.md                saída da fase 10
+  project-scope.md             fases 1–2
+  mvp.md                       fase 3
+  spikes.md                    fase 4 (opcional)
+  tech-stack.md                fase 5
+  implementation-plan.md       fase 6, atualizado durante o build
+  test-plan.md                 fase 6, estendido na fase 9
+  AGENTS.md                    fase 7 — contexto de trabalho do agente
+  CLAUDE.md                    importa o AGENTS.md para o Claude Code
+  deployment.md                fase 10
   decisions.md                 log contínuo, atualizado em todas as fases
-LICENSE
+skills/
+  pdev/                        o guia: onde estou, o que vem agora?
+  pdev-clarify/ … pdev-iterate/  uma skill por fase (2–11)
 ```
+
+O instalador em si (`bin/`, `hooks/`, `install.sh`, `setup.sh`) fica na raiz
+do repositório.
 
 ## Princípios
 
 - **Contexto antes de código.** O agente lê os artefatos antes de construir.
-- **Passos pequenos.** Uma tarefa por vez, cada uma revisável em um único diff.
-- **Documentos vivos.** Artefatos são atualizados conforme a realidade muda.
+- **Verificações antes de código.** O "pronto" de toda tarefa é algo que o
+  agente consegue executar.
 - **Você decide, o agente rascunha.** O agente propõe; você é dono de cada decisão.
-- **Revise cada diff.** O agente é rápido, não infalível.
+- **Revise na proporção do risco.** Gates em toda mudança; sua atenção
+  cuidadosa no plano e no que é difícil de reverter.
+- **Documentos vivos.** Artefatos são atualizados conforme a realidade muda,
+  não escritos uma vez só.
 
 ## Licença
 

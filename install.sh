@@ -13,6 +13,11 @@ if [[ ! -f "$SETUP" || ! -d "$REPO_DIR/en" || ! -d "$REPO_DIR/pt-br" ]]; then
   exit 1
 fi
 
+if ! command -v node >/dev/null 2>&1; then
+  echo "Error: Node.js 16+ is required (https://nodejs.org)."
+  exit 1
+fi
+
 echo ""
 echo "Product Development Framework With AI — Install"
 echo "==============================================="
